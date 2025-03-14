@@ -6,12 +6,11 @@ const cors = require("cors");
 const app = express();
 app.use(cors());
 
-const PORT = process.env.PORT || 8080;  // Railway でのポートに合わせる
+const PORT = process.env.PORT || 8080;  // Railway のポート設定に合わせる
 
 const server = http.createServer(app);  // HTTP サーバーを作成
 const wss = new WebSocket.Server({ server });  // WebSocket サーバーを作成
 
-// WebSocket の接続処理
 wss.on("connection", (ws) => {
   console.log("新しい WebSocket 接続");
 
@@ -35,7 +34,6 @@ wss.on("connection", (ws) => {
   });
 });
 
-// HTTP サーバーのポートでリスニング
 server.listen(PORT, () => {
   console.log(`✅ WebSocket サーバーがポート ${PORT} で起動`);
 });
