@@ -88,4 +88,3 @@ server.listen(PORT, () => {
   console.log(`✅ WebSocketサーバーが起動しました - ポート: ${PORT}`);
   console.log(`✅ サーバーURL: ${process.env.RAILWAY_PUBLIC_DOMAIN || "localhost"}`);
 });
-});

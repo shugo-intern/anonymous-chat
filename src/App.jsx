@@ -20,10 +20,11 @@ function App() {
         socketRef.current.close();
       }
       
-      console.log(`WebSocket に接続しています: ${SERVER_URL}`);
+      const wsUrl = SERVER_URL;
+      console.log(`WebSocket に接続しています: ${wsUrl}`);
       
       try {
-        socketRef.current = new WebSocket(SERVER_URL);
+        socketRef.current = new WebSocket(wsUrl);
         
         socketRef.current.onopen = () => {
           console.log("WebSocket 接続成功");
@@ -46,6 +47,7 @@ function App() {
             } else {
               newMessage = JSON.parse(event.data);
             }
+            console.log("受信したメッセージ:", newMessage);
             setMessages((prev) => [...prev, newMessage]);
           } catch (error) {
             console.error("メッセージの解析に失敗しました:", error);
@@ -101,6 +103,7 @@ function App() {
     
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       const newMessage = { text: input, user: "匿名" };
+      console.log("送信するメッセージ:", newMessage);
       socketRef.current.send(JSON.stringify(newMessage));
       setInput("");
     } else {
