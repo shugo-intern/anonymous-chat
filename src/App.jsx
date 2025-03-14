@@ -20,7 +20,8 @@ function App() {
         socketRef.current.close();
       }
       
-      const wsUrl = SERVER_URL;
+      // WebSocket URLを構築
+      const wsUrl = SERVER_URL.endsWith('/ws') ? SERVER_URL : `${SERVER_URL}/ws`;
       console.log(`WebSocket に接続しています: ${wsUrl}`);
       
       try {
