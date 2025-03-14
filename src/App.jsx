@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 
 // 本番環境では正しいWebSocketエンドポイントを使用
-const SERVER_URL = import.meta.env.VITE_WEBSOCKET_URL || "wss://localhost:8080";
+const SERVER_URL = import.meta.env.VITE_WEBSOCKET_URL || "wss://localhost:8080/ws";
 
 function App() {
   const [messages, setMessages] = useState([]);

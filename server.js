@@ -5,28 +5,24 @@ const cors = require("cors");
 
 const app = express();
 
-// CORSの設定を詳細に行う
+// CORSの設定を詳細に指定
 app.use(cors({
-  origin: '*', // 本番環境では適切なオリジンに制限すべき
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type']
+  origin: "*", // 本番環境では特定のドメインを指定することを推奨
+  methods: ["GET", "POST"],
+  credentials: true
 }));
 
-// 基本的なヘルスチェックエンドポイント
-app.get('/', (req, res) => {
-  res.send('WebSocket Server is running!');
-});
-
 const PORT = process.env.PORT || 8080;
+
 const server = http.createServer(app);
 
-// WebSocketサーバーの設定を改善
+// WebSocketサーバーの設定を最適化
 const wss = new WebSocket.Server({ 
   server,
-  // 60秒ごとにピンを送信（接続維持用）
+  path: "/ws", // WebSocketのパスを明示的に指定
+  clientTracking: true,
   perMessageDeflate: {
     zlibDeflateOptions: {
-      // See zlib defaults.
       chunkSize: 1024,
       memLevel: 7,
       level: 3
@@ -34,75 +30,62 @@ const wss = new WebSocket.Server({
     zlibInflateOptions: {
       chunkSize: 10 * 1024
     },
-    // 閾値以下のデータは圧縮しない
-    threshold: 1024,
-    // クライアント毎の圧縮を無効化
     clientNoContextTakeover: true,
-    // サーバー毎の圧縮を無効化
     serverNoContextTakeover: true,
-    // サーバーは常にデフレートを要求
     serverMaxWindowBits: 10,
-    // クライアントのデフレートウィンドウビットの最大値
-    clientMaxWindowBits: 10,
-    // メッセージのデフレートを無効化
     concurrencyLimit: 10,
+    threshold: 1024
   }
 });
 
-// ハートビート機能の実装（接続維持用）
-function heartbeat() {
-  this.isAlive = true;
-}
+// 接続中のクライアントを管理
+const clients = new Set();
 
-wss.on("connection", (ws) => {
-  console.log("新しい WebSocket 接続");
-  ws.isAlive = true;
-  ws.on('pong', heartbeat);
+wss.on("connection", (ws, req) => {
+  console.log(`新しいWebSocket接続: ${req.socket.remoteAddress}`);
+  clients.add(ws);
 
-  // 接続時にウェルカムメッセージを送信
+  // 接続成功時のメッセージを送信
   ws.send(JSON.stringify({
-    user: "システム",
-    text: "チャットに接続しました。メッセージを送信してください。"
+    type: "system",
+    message: "接続が確立されました"
   }));
 
   ws.on("message", (message) => {
     try {
-      console.log("受信したメッセージ:", message.toString());
-      
-      // すべてのクライアントにメッセージを送信
-      wss.clients.forEach((client) => {
+      const data = JSON.parse(message);
+      console.log("受信したメッセージ:", data);
+
+      // メッセージをブロードキャスト
+      clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
-          client.send(message.toString());
+          client.send(JSON.stringify(data));
         }
       });
     } catch (error) {
-      console.error("メッセージ処理中にエラー:", error);
+      console.error("メッセージの処理中にエラーが発生:", error);
     }
   });
 
   ws.on("close", () => {
-    console.log("WebSocket 接続が閉じられました");
+    console.log(`クライアント切断: ${req.socket.remoteAddress}`);
+    clients.delete(ws);
   });
 
   ws.on("error", (error) => {
-    console.error("WebSocket エラー:", error);
+    console.error("WebSocketエラー:", error);
+    clients.delete(ws);
   });
 });
 
-// 30秒ごとに接続チェックを実行
-const interval = setInterval(() => {
-  wss.clients.forEach((ws) => {
-    if (ws.isAlive === false) return ws.terminate();
-    
-    ws.isAlive = false;
-    ws.ping(() => {});
-  });
-}, 30000);
-
-wss.on('close', () => {
-  clearInterval(interval);
+// サーバーのエラーハンドリング
+server.on("error", (error) => {
+  console.error("サーバーエラー:", error);
 });
 
+// サーバーの起動
 server.listen(PORT, () => {
-  console.log(`✅ WebSocket サーバーがポート ${PORT} で起動`);
+  console.log(`✅ WebSocketサーバーが起動しました - ポート: ${PORT}`);
+  console.log(`✅ サーバーURL: ${process.env.RAILWAY_PUBLIC_DOMAIN || "localhost"}`);
+});
 });
