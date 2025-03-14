@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 
-const SERVER_URL = "wss://anonymous-chat-production-5937.up.railway.app"; // WebSocketサーバーのURL
+const SERVER_URL = import.meta.env.VITE_WEBSOCKET_URL || "wss://localhost:8080"; // デフォルトをローカルに設定
+
 
 function App() {
   const [messages, setMessages] = useState([]);
