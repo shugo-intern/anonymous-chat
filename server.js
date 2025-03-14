@@ -6,22 +6,19 @@ const cors = require("cors");
 const app = express();
 app.use(cors());
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8080;  // Railway でのポートに合わせる
 
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ 
-  server,
-  perMessageDeflate: false // WebSocket の圧縮を無効化（互換性向上のため）
-});
+const server = http.createServer(app);  // HTTP サーバーを作成
+const wss = new WebSocket.Server({ server });  // WebSocket サーバーを作成
 
-// 接続時のログを追加
-wss.on("connection", (ws, req) => {
-  console.log(`新しい WebSocket 接続: ${req.socket.remoteAddress}`);
+// WebSocket の接続処理
+wss.on("connection", (ws) => {
+  console.log("新しい WebSocket 接続");
 
   ws.on("message", (message) => {
     console.log("受信したメッセージ:", message.toString());
 
-    // すべてのクライアントに文字列として送信
+    // すべてのクライアントにメッセージを送信
     wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(message.toString());
@@ -38,6 +35,7 @@ wss.on("connection", (ws, req) => {
   });
 });
 
+// HTTP サーバーのポートでリスニング
 server.listen(PORT, () => {
-  console.log(`✅ WebSocketサーバーがポート ${PORT} で起動`);
+  console.log(`✅ WebSocket サーバーがポート ${PORT} で起動`);
 });
